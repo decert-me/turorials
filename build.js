@@ -169,6 +169,32 @@ function findLabel(data, id) {
 return null;
 }
 
+function generateFrontMatter(label, content, meta) {
+  // 添加文档元数据
+
+  if (!label) return content;
+  
+  if (content.startsWith("---")) {
+    const title = content.indexOf("title:") !== -1 ? "" : `title: "${label}"`;
+    const replacement = `---
+${title}
+description: "${meta.desc}"
+image: "https://ipfs.decert.me/${meta.img}"
+sidebar_label: "${label}"`;
+
+    content = content.replace("---", replacement);
+    return content;
+  }
+  
+  return `---
+title: "${label}"
+description: "${meta.desc}"
+image: "https://ipfs.decert.me/${meta.img}"
+sidebar_label: "${label}"
+---
+${content}`;
+}
+
 function fromDir(startPath, filter, meta, list) {
   if (!fs.existsSync(startPath)) {
       console.log("no dir ", startPath);
@@ -198,24 +224,8 @@ function fromDir(startPath, filter, meta, list) {
             });
           }
           let label = findLabel(list, idToFind);
-          const textToAdd = !label ? "" :
-content.startsWith("---") ?
-content = content.replace("---",
-`---
-${content.indexOf("title:") !== -1 ? "" : "title: "+label}
-description: "${meta.desc}"
-image: "https://ipfs.decert.me/${meta.img}"
-sidebar_label: "${label}"
-`)
-:
-`---
-title: "${label}"
-description: "${meta.desc}"
-image: "https://ipfs.decert.me/${meta.img}"
-sidebar_label: "${label}"
----
-`
-          content = textToAdd + content;
+          content = generateFrontMatter(label, content, meta)
+
           fs.writeFileSync(filename, content, 'utf8');
       }
   }
